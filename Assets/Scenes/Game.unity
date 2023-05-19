@@ -154,6 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 50
   height: 50
+  smoothRadius: 3
   tilePrefabs:
   - {fileID: 1888164936705912, guid: 31831991ea5df8544be2db96e031d5d3, type: 3}
   - {fileID: 1487127839776272, guid: eed5b990fef32f74884edcc6df6d9b0d, type: 3}
