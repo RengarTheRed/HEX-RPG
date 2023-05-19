@@ -5,15 +5,18 @@ using UnityEngine;
 
 public class TileSpawn : MonoBehaviour
 {
-
+    //Inspector Set Variables
     public int width, height, smoothRadius;
     public List<GameObject> tilePrefabs = new List<GameObject>();
     public List<GameObject> tileTopper = new List<GameObject>();
-    GameObject[,] tileArray;
+
+
+    Tile[,] tileArray;
+
     // Start is called before the first frame update
     void Start()
     {
-        tileArray = new GameObject[width, height];
+        tileArray = new Tile[width, height];
         SetFrameRate();
         GenerateTiles();
         RandomiseHeight();
@@ -37,8 +40,9 @@ public class TileSpawn : MonoBehaviour
                 }
 
                 //Adds to array and parent
-                tileArray[x,z] = newTile;
                 newTile.transform.parent = this.transform;
+                Tile newTileOb = new Tile(TileType.Plain, newTile);
+                tileArray[x,z] = newTileOb;
             }
         }
     }
@@ -64,26 +68,25 @@ public class TileSpawn : MonoBehaviour
             {
                 float averageHeight;
                 int toDivideBy = 1;
-
-                averageHeight = TileHeight(tileArray[x, z]);
+                averageHeight = TileHeight(tileArray[x, z].TileObject());
 
                 for (int i = 0; i < smoothRadius; i++)
                 {
-                    averageHeight += GetNearbyTileHeight(i, x, z, tileArray[x, z]);
+                    averageHeight += GetNearbyTileHeight(i, x, z, tileArray[x, z].TileObject());
                     toDivideBy++;
                 }
 
                 //Finally divide by amount of tiles weighted
                 averageHeight = averageHeight / toDivideBy;
-                tileArray[x,z].transform.position = new Vector3(tileArray[x,z].transform.position.x, averageHeight, tileArray[x, z].transform.position.z);
+                tileArray[x,z].TileObject().transform.position = new Vector3(tileArray[x,z].TileObject().transform.position.x, averageHeight, tileArray[x, z].TileObject().transform.position.z);
             }
         }
     }
     void RandomiseHeight()
     {
-        foreach(GameObject tile in tileArray)
+        foreach(Tile tile in tileArray)
         {
-            tile.transform.position = new Vector3(tile.transform.position.x, Random.Range(-2, 5), tile.transform.position.z);
+            tile.TileObject().transform.position = new Vector3(tile.TileObject().transform.position.x, Random.Range(-2, 5), tile.TileObject().transform.position.z);
         }
     }
     float TileHeight(GameObject tileToGet)
@@ -98,24 +101,24 @@ public class TileSpawn : MonoBehaviour
         //Lows
         if (x-max > 0)
         {
-            averageHeight += TileHeight(tileArray[x - max - 1, z]);
+            averageHeight += TileHeight(tileArray[x - max - 1, z].TileObject());
             toDivide++;
         }
         if (z-max > 0)
         {
-            averageHeight += TileHeight(tileArray[x, z - max - 1]);
+            averageHeight += TileHeight(tileArray[x, z - max - 1].TileObject());
             toDivide++;
         }
 
         //Highs
         if (x + max < tileArray.GetLength(0) - 1)
         {
-            averageHeight += TileHeight(tileArray[x + max + 1, z]);
+            averageHeight += TileHeight(tileArray[x + max + 1, z].TileObject());
             toDivide++;
         }
         if (z + max < tileArray.GetLength(1) - 1)
         {
-            averageHeight += TileHeight(tileArray[x, z + max + 1]);
+            averageHeight += TileHeight(tileArray[x, z + max + 1].TileObject());
             toDivide++;
         }
 
@@ -128,15 +131,15 @@ public class TileSpawn : MonoBehaviour
     }
     void GenerateTileTops()
     {
-        foreach (GameObject tile in tileArray)
+        foreach (Tile tile in tileArray)
         {
             //Adds tile topper
             int topIndex = Random.Range(0, tileTopper.Count);
             GameObject tileTop = Instantiate(tileTopper[topIndex]);
 
-            tileTop.transform.position = new Vector3(tile.transform.position.x, tile.transform.position.y + tile.GetComponent<MeshFilter>().sharedMesh.bounds.max.y + tileTop.GetComponent<Collider>().bounds.size.y, tile.transform.position.z);
+            tileTop.transform.position = new Vector3(tile.TileObject().transform.position.x, tile.TileObject().transform.position.y + tile.TileObject().GetComponent<MeshFilter>().sharedMesh.bounds.max.y + tileTop.GetComponent<Collider>().bounds.size.y, tile.TileObject().transform.position.z);
 
-            tileTop.transform.parent = tile.transform;
+            tileTop.transform.parent = tile.TileObject().transform;
         }
         Debug.Log("Tops generated");
     }
@@ -150,4 +153,39 @@ class HeightCalculator
         toDivide = div;
         averageHeight = height;
     }
+}
+
+class Tile
+{
+    TileType tileType;
+    GameObject tileObject;
+    GameObject tileTopper;
+    public Tile(TileType nTileType, GameObject tObject)
+    {
+        tileType = nTileType;
+        tileObject = tObject;
+        SpawnTileTop();
+    }
+    public GameObject TileObject()
+    {
+        return tileObject;
+    }
+    public void ChangeTileTop(TileType newType)
+    {
+
+        tileType = newType;
+    }
+
+    void SpawnTileTop()
+    {
+        //GETS SPAWNSCRIPT ACCESS HERE
+        TileSpawn tileSpawnScript = tileObject.GetComponentInParent<TileSpawn>();
+
+    }
+}
+enum TileType
+{
+    Plain,
+    Path,
+    Forest
 }
